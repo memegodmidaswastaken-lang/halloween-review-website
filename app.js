@@ -9,20 +9,19 @@ import path from "path";
 const app = express();
 const PORT = process.env.PORT || 3000;
 
-// Persistent directories
+// Persistent directories for Render
 const dataDir = "/data";
 const dbPath = path.join(dataDir, "db.sqlite");
 const uploadDir = path.join(dataDir, "uploads");
 if (!fs.existsSync(dataDir)) fs.mkdirSync(dataDir);
 if (!fs.existsSync(uploadDir)) fs.mkdirSync(uploadDir);
 
-// Middleware
 app.use(cors());
 app.use(express.json());
 app.use(express.static("public"));
 app.use("/uploads", express.static(uploadDir));
 
-// DB setup
+// Database
 const db = new sqlite3.Database(dbPath);
 db.serialize(() => {
   db.run(`CREATE TABLE IF NOT EXISTS users (
@@ -57,31 +56,27 @@ db.serialize(() => {
   )`);
 });
 
-// File upload (persistent)
 const storage = multer.diskStorage({
   destination: (req, file, cb) => cb(null, uploadDir),
-  filename: (req, file, cb) => cb(null, Date.now() + "-" + file.originalname),
+  filename: (req, file, cb) => cb(null, Date.now() + "-" + file.originalname)
 });
 const upload = multer({ storage });
 
-// Helper
-const hash = (pw) => bcrypt.hashSync(pw, 10);
+// Helpers
+const hash = pw => bcrypt.hashSync(pw, 10);
 const check = (pw, hashpw) => bcrypt.compareSync(pw, hashpw);
 
-// --- Routes ---
-
-// Register
+// Routes
 app.post("/api/register", (req, res) => {
   const { username, password } = req.body;
   if (!username || !password) return res.status(400).json({ error: "Missing fields" });
   const role = username === "memegodmidas" ? "moderator" : "user";
-  db.run("INSERT INTO users (username, password, role) VALUES (?, ?, ?)", [username, hash(password), role], (err) => {
+  db.run("INSERT INTO users (username, password, role) VALUES (?, ?, ?)", [username, hash(password), role], err => {
     if (err) return res.status(400).json({ error: "Username taken" });
     res.json({ success: true });
   });
 });
 
-// Login
 app.post("/api/login", (req, res) => {
   const { username, password } = req.body;
   db.get("SELECT * FROM users WHERE username = ?", [username], (err, row) => {
@@ -91,7 +86,6 @@ app.post("/api/login", (req, res) => {
   });
 });
 
-// Upload profile picture
 app.post("/api/profilepic/:id", upload.single("file"), (req, res) => {
   const { id } = req.params;
   const filePath = `/uploads/${req.file.filename}`;
@@ -99,7 +93,6 @@ app.post("/api/profilepic/:id", upload.single("file"), (req, res) => {
   res.json({ success: true, path: filePath });
 });
 
-// Add house
 app.post("/api/houses", upload.single("image"), (req, res) => {
   const { lat, lng, rating, gluten_free, sugar_free, lactose_free, other, description, user_id } = req.body;
   const imagePath = req.file ? `/uploads/${req.file.filename}` : null;
@@ -107,41 +100,35 @@ app.post("/api/houses", upload.single("image"), (req, res) => {
     `INSERT INTO houses (lat, lng, rating, gluten_free, sugar_free, lactose_free, other, description, user_id, image)
      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
     [lat, lng, rating, gluten_free, sugar_free, lactose_free, other, description, user_id, imagePath],
-    function () {
-      res.json({ id: this.lastID });
-    }
+    function () { res.json({ id: this.lastID }); }
   );
 });
 
-// Add review
 app.post("/api/reviews", (req, res) => {
   const { house_id, user_id, review } = req.body;
   db.run("INSERT INTO reviews (house_id, user_id, review) VALUES (?, ?, ?)", [house_id, user_id, review]);
   res.json({ success: true });
 });
 
-// Get houses
 app.get("/api/houses", (req, res) => {
   db.all(
-    `SELECT h.*, u.username, u.title, u.profile_pic FROM houses h
-     LEFT JOIN users u ON h.user_id = u.id`,
+    `SELECT h.*, u.username, u.title, u.profile_pic
+     FROM houses h LEFT JOIN users u ON h.user_id = u.id`,
     [],
     (err, rows) => res.json(rows)
   );
 });
 
-// Get reviews
 app.get("/api/reviews/:houseId", (req, res) => {
   db.all(
-    `SELECT r.*, u.username, u.title, u.profile_pic FROM reviews r
-     LEFT JOIN users u ON r.user_id = u.id
+    `SELECT r.*, u.username, u.title, u.profile_pic
+     FROM reviews r LEFT JOIN users u ON r.user_id = u.id
      WHERE r.house_id = ?`,
     [req.params.houseId],
     (err, rows) => res.json(rows)
   );
 });
 
-// Moderator: set title
 app.post("/api/settitle", (req, res) => {
   const { mod_id, username, title } = req.body;
   db.get("SELECT role FROM users WHERE id = ?", [mod_id], (err, row) => {
@@ -151,7 +138,6 @@ app.post("/api/settitle", (req, res) => {
   });
 });
 
-// Moderator: delete review
 app.post("/api/deletereview", (req, res) => {
   const { mod_id, review_id } = req.body;
   db.get("SELECT role FROM users WHERE id = ?", [mod_id], (err, row) => {
