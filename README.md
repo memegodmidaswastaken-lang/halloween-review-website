@@ -1,21 +1,22 @@
 # 🎃 Halloween Candy Map
 
-A Google Maps–style site where people rate houses by the candy they give out.
+A Google Maps-style site for rating houses based on candy, reviews, and decorations.
 
 ## Features
 - Register/login (no email)
-- Add houses with candy rating
+- Add houses with candy ratings
 - Post reviews
 - Upload profile pictures
-- Dark mode
-- Moderator tools (account: **memegodmidas**, password: `Godsatan1342`)
-- Persistent data on Render using `/data`
+- Dark mode toggle
+- Moderator tools (memegodmidas)
+- Persistent database and uploads on Render
 
 ## Deploy on Render
-1. Create a new **Web Service** from this repo.
+1. Create a **Web Service** from this repo.
 2. Add a **Persistent Disk**:
    - Name: `data`
    - Mount Path: `/data`
    - Size: `1GB`
-3. Build command: *(leave blank)*
-4. Start command: `node app.js`
+3. Build Command: *(leave empty)*
+4. Start Command: `node app.js`
+5. Deploy
