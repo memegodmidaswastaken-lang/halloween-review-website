@@ -1,0 +1,38 @@
+body {
+  font-family: Poppins, sans-serif;
+  margin: 0;
+  background: #fafafa;
+  color: #222;
+}
+body.dark {
+  background: #111;
+  color: #ddd;
+}
+.nav {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 10px 20px;
+  background: #ff6600;
+  color: white;
+}
+button {
+  background: #333;
+  color: white;
+  border: none;
+  border-radius: 8px;
+  padding: 5px 10px;
+  cursor: pointer;
+}
+button:hover { background: #555; }
+body.dark .nav { background: #222; }
+.pfp {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  object-fit: cover;
+}
+#map {
+  width: 100%;
+  height: calc(100vh - 60px);
+}
